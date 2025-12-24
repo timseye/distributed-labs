@@ -3,7 +3,7 @@ import json
 import uuid
 import time
 
-SERVER_IP = "3.87.133.81" 
+SERVER_IP = "50.19.17.129" 
 PORT = 5000
 
 def rpc_call(method, params):

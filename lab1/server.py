@@ -1,10 +1,12 @@
 import socket
 import json
+import time
+import sys
 
 def add(a, b):
     return a + b
 
-def start_server():
+def start_server(delay=False):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.bind(('0.0.0.0', 5000))
@@ -19,6 +21,11 @@ def start_server():
             
             req = json.loads(data)
             print(f"LOG: Received request {req['request_id']} for method '{req['method']}'")
+
+            if delay:
+                print(f"[SIMULATING DELAY] Server sleeping for 3 seconds...")
+                time.sleep(3)
+                print(f"[DELAY COMPLETE] Resuming processing...")
 
             if req['method'] == 'add':
                 res_val = add(req['params']['a'], req['params']['b'])
@@ -37,4 +44,7 @@ def start_server():
             conn.close()
 
 if __name__ == "__main__":
-    start_server()
+    delay_mode = "--delay" in sys.argv
+    if delay_mode:
+        print("[MODE] Running with 3-second delay simulation")
+    start_server(delay=delay_mode)

@@ -31,15 +31,14 @@ DELAY_RULES = {
     # Example format:
     # ("A", "http://10.0.1.13:8002"): 2.0
 }
-# YOUR CODE HERE:
-# Add a delay rule to implement Scenario A (delay A -> C by ~2 seconds).
+# Delay rules will be configured programmatically in main() based on NODE_ID
 
 
 def lamport_tick_local() -> int:
     """Increment Lamport clock for a local event and return new value."""
     global LAMPORT
     with lock:
-        # YOUR CODE HERE
+        LAMPORT += 1
         return LAMPORT
 
 
@@ -47,7 +46,7 @@ def lamport_on_receive(received_ts: int) -> int:
     """On receive: L = max(L, received_ts) + 1. Return new value."""
     global LAMPORT
     with lock:
-        # YOUR CODE HERE
+        LAMPORT = max(LAMPORT, received_ts) + 1
         return LAMPORT
 
 
@@ -209,8 +208,13 @@ def main():
     PEERS = [p.strip() for p in args.peers.split(",") if p.strip()]
     LAMPORT = 0
 
-    # YOUR CODE HERE (optional):
-    # Configure DELAY_RULES based on NODE_ID to implement Scenario A deterministically.
+    # Configure DELAY_RULES for Scenario A: delay from A to C by 2 seconds
+    # This creates reordering opportunities for testing Lamport clock behavior
+    if NODE_ID == "A":
+        for peer in PEERS:
+            if ":8002" in peer:  # Node C typically on port 8002
+                DELAY_RULES[(NODE_ID, peer)] = 2.0
+                print(f"[{NODE_ID}] Added delay rule: {NODE_ID} -> {peer} = 2.0s")
 
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"[{NODE_ID}] listening on {args.host}:{args.port} peers={PEERS}")

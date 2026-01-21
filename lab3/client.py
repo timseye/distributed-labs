@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Lab 3 Client
-Submits commands to the Raft Cluster.
-"""
 
 import argparse
 import json
@@ -20,15 +16,12 @@ def send_command(peer_url: str, command: str) -> Optional[dict]:
             return json.loads(resp.read().decode('utf-8'))
     except error.HTTPError as e:
         if e.code == 503:
-            # Not Leader, might have hint
             try:
                 body = e.read().decode('utf-8')
                 return json.loads(body)
             except:
                 pass
-        # print(f"Error contacting {peer_url}: {e}")
     except Exception as e:
-        # print(f"Failed to reach {peer_url}: {e}")
         pass
     return None
 
@@ -43,8 +36,7 @@ def main():
 
     print(f"Submitting '{command}' to cluster {peers}...")
 
-    # Simple discovery loop
-    for _ in range(3): # Retry a few times
+    for _ in range(3):
         for peer in peers:
             print(f"Trying {peer}...")
             resp = send_command(peer, command)
@@ -56,10 +48,6 @@ def main():
                 elif 'error' in resp and resp['error'] == 'Not Leader':
                     leader_hint = resp.get('leader')
                     print(f"  -> Not Leader. Hint: {leader_hint}")
-                    # If we could map ID to URL, we'd jump there. 
-                    # For now, just continue loop or try to guess URL if ID maps to port? 
-                    # Our IDs are A, B, C. URL mapping is external knowledge. 
-                    # We'll just continue trying all peers in the list.
                     continue
     
     print("FAILURE: Could not submit command to any leader.")

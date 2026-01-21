@@ -1,0 +1,138 @@
+LAB 3 — Consensus (Raft Lite) Deployment
+Distributed Computing — AWS EC2-based
+Estimated time: 3-5 hours
+Work mode: Individual
+Submission: Live demo or report + code repository
+Cluster size: 3–5 nodes (odd number recommended)
+1. Lab Objectives
+By completing this lab, students will be able to:
+• Explain and implement the core ideas of consensus.
+• Implement a simplified Raft protocol (Raft Lite).
+• Perform leader election and log replication.
+• Handle leader failure and recovery.
+• Observe safety and liveness properties of consensus.
+• Deploy and test consensus on real EC2 nodes.
+This lab directly supports course leaning objectives related to:
+• consensus and coordination,
+• fault tolerance,
+• leader-based replication,
+• distributed algorithm evaluation.
+2. What You Will Build
+You will build a Raft Lite cluster with 3–5 nodes, where:
+• At most one leader exists at any time.
+• Clients submit commands to the leader.
+• Commands are replicated to followers.
+• A command is committed after majority agreement.
+• If the leader fails, a new leader is elected.
+This is not full Raft (no snapshots, no log compaction).
+3. Raft Lite Scope (What Is Required / Not Required)
+ Required
+• Leader election
+• Heartbeats
+• Log replication
+• Majority-based commit
+• Leader crash recovery
+ Not Required
+• Log compaction
+• Persistent storage
+• Membership changes
+• Byzantine fault tolerance
+4. System Model
+• Nodes: 3–5 EC2 instances (A, B, C [, D, E])
+• Roles: Follower, Candidate, Leader
+• Communication: Message passing (HTTP or TCP)
+• Failure model: Crash-stop failures
+• Timing: Asynchronous network with timeouts
+5. Node State (Required)
+Each node must maintain:
+• currentTerm
+• votedFor
+• log[] (list of commands with term)
+• commitIndex
+• state ∈ {Follower, Candidate, Leader}
+6. Message Types (Raft Lite)
+You must implement at least:
+Leader Election
+• RequestVote(term, candidateId)
+• VoteResponse(term, voteGranted)
+Log Replication
+• AppendEntries(term, leaderId, entries[])
+• AppendResponse(term, success)
+7. Part 1 — Leader Election
+Required Behavior
+• Nodes start as Followers.
+• If no heartbeat is received within a timeout:
+o Node becomes Candidate
+o Increments term
+o Requests votes from peers
+• Node becomes Leader if it receives majority votes.
+• Leader sends periodic heartbeats.
+Logging Requirements
+[Node B] Timeout → Candidate (term 3)
+[Node B] Received votes from A, C → Leader
+8. Part 2 — Log Replication (Raft Lite)
+Client Interaction
+Clients send commands to the leader:
+SET x = 5
+Replication Rules
+• Leader appends command to its log.
+• Leader sends AppendEntries to followers.
+• Entry is committed when acknowledged by a majority.
+• Followers apply committed entries in order.
+Logging Requirements
+[Leader A] Append log entry (term=3, cmd=SET x=5)
+[Node C] Append success
+[Leader A] Entry committed (index=2)
+9. Part 3 — Failure Experiment (REQUIRED)
+You must demonstrate at least one failure scenario:
+Scenario A — Leader Crash
+1. Start cluster.
+2. Observe leader election.
+3. Kill leader process.
+4. Show new leader election.
+5. Submit new command successfully.
+Scenario B — Follower Crash
+1. Kill a follower.
+2. Submit commands to leader.
+3. Restart follower.
+4. Show follower catches up.
+10. Deployment Instructions (Example)
+Use private IPs inside the VPC.
+3-node example
+Node A: python3 node.py --id A --port 8000 --peers B,C
+Node B: python3 node.py --id B --port 8001 --peers A,C
+Node C: python3 node.py --id C --port 8002 --peers A,B
+11. Safety and Correctness Checks
+Your implementation must ensure:
+• At most one leader per term
+• No committed entry is lost
+• All nodes eventually agree on committed log entries
+You should explicitly explain these points in your video demo.
+12. Deliverables
+ Deliverable 1 — Live Demo or Report (3–4 pages)
+Report must show:
+• Cluster startup
+• Leader election
+• Log replication
+• Majority commit
+• Failure + recovery
+• Verbal or written explanation
+ Deliverable 2 — Code Repository
+Must include:
+• Node implementation
+• Client or command trigger
+• Minimal README (run instructions only)
+13. Evaluation Criteria (100 points)
+Criterion Points
+Correct leader election 25
+Correct log replication 25
+Majority-based commit 20
+Failure handling 20
+Report clarity & explanation 10
+Passing score: ≥ 50 points
+14. Common Mistakes to Avoid
+• Electing multiple leaders in the same term
+• Committing without majority
+• Accepting client commands on followers
+• Hardcoding leader identity
+• Ignoring term updates
